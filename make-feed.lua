@@ -74,6 +74,8 @@ local function get_metadata(file)
 	-- having all those nils in the table doesn't really do anything in terms of functionality, but it lets me see what i need to put in it
 
 	meta.filename = file
+	meta.sha1 = sha1.sha1(readfile(file))
+	meta.release = get_iso8601_date(lfs.attributes(file, "modification"))
 
 	loadfile(file)()
 	-- script_name etc are now in our global scope
@@ -84,8 +86,6 @@ local function get_metadata(file)
 	meta.author = script_author
 	meta.namespace = script_namespace
 	meta.depctrl = __feedmaker_version
-	meta.sha1 = sha1.sha1(readfile(file))
-	meta.release = get_iso8601_date(lfs.attributes(file, "modification"))
 	return meta
 end
 
