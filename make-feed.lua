@@ -62,8 +62,8 @@ local function get_files(path)
 		local absolute = clean_path(path, file)
 		if file == "." or file == ".." then -- silently skip dir and 1-level-up dir
 		elseif pcall(lfs.dir, absolute) then file = join_tables(files, get_files(absolute)) -- search recursively
-		elseif extension ~= "lua" then print(absolute .. ": not a lua file, skipping")
-		elseif not valid_namespace(name) then print(absolute .. ": invalid namespace, skipping")
+		elseif extension ~= "lua" then io.stderr:write(absolute .. ": not a lua file, skipping\n")
+		elseif not valid_namespace(name) then io.stderr:write(absolute .. ": invalid namespace, skipping\n")
 		else table.insert(files, absolute) end
 	end
 	return files
