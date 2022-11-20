@@ -116,13 +116,17 @@ end
 
 local function clean_depctrl(depctrl)
 	local required = {}
+	local feeds = {}
+	if #depctrl == 0 then return nil end
 	for _, mod in ipairs(depctrl) do
 		if type(mod[1]) ~= "string" then mod = mod[1] end
-		mod["moduleName"] = mod[1]
+		local modname = mod[1]
+		mod["moduleName"] = modname
 		mod[1] = nil
 		table.insert(required, mod)
+		feeds[modname] = mod["feed"]
 	end
-	return required
+	return required, feeds
 end
 
 local function make_feed(macros)
@@ -130,7 +134,7 @@ local function make_feed(macros)
 		dependencyControlFeedFormatVersion = "0.3.0",
 		name = config.name,
 		description = config.description,
-		knownFeeds = {},
+		knownFeeds = config.knownFeeds,
 		baseUrl = config.baseUrl,
 		url = config.url,
 		maintainer = config.maintainer,
@@ -140,7 +144,10 @@ local function make_feed(macros)
 	for _, script in ipairs(macros) do
 		local macro = {url = config.scriptUrl, author = script.author, name = script.name, description = script.description, channels = {}}
 		local channel_info = {version = script.version, released = script.release, default = true, files = {}}
-		channel_info.requiredModules = clean_depctrl(script.depctrl)
+		local requiredModules, feeds = clean_depctrl(script.depctrl)
+		feed.knownFeeds = join_ktables(feed.knownFeeds, feeds)
+
+		channel_info.requiredModules = requiredModules
 		table.insert(channel_info.files, {name = ".lua", url = config.fileUrl, sha1 = script.sha1})
 		macro.channels[config.channel] = channel_info
 		feed.macros[script.namespace] = macro
