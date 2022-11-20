@@ -7,7 +7,27 @@ local function get_version_record(i)
 	f:write(inspect(i))
 	f:flush()
 	f:close()
-	return { requireModules = noop, registerMacro = noop, registerMacros = noop }
+	return {
+		checkVersion = noop,
+		getConfigFileName = noop,
+		getConfigHandler = noop,
+		getLogger = noop,
+		getVersionNumber = noop,
+		getVersionString = noop,
+		loadConfig = noop,
+		loadModule = noop,
+		moveFile = noop,
+		register = noop,
+		registerMacro = noop,
+		registerMacros = noop,
+		registerTests = noop,
+		requireModules = noop,
+		writeConfig = noop,
+		getUpdaterErrorMsg = noop,
+		getUpdaterLock = noop,
+		releaseUpdaterLock = noop,
+		update = noop,
+	}
 end
 
 return get_version_record
