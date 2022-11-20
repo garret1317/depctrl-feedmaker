@@ -106,13 +106,9 @@ end
 local function clean_depctrl(depctrl)
 	local required = {}
 	for _, mod in ipairs(depctrl) do
-		if type(mod[1]) == "string" then
-			mod["moduleName"] = mod[1]
-			mod[1] = nil
-		else
-			mod[1]["moduleName"] = mod[1][1]
-			mod[1][1] = nil
-		end
+		if type(mod[1]) ~= "string" then mod = mod[1] end
+		mod["moduleName"] = mod[1]
+		mod[1] = nil
 		table.insert(required, mod)
 	end
 	return required
@@ -134,7 +130,7 @@ local function make_feed(macros)
 		local macro = {url = config.scriptUrl, author = script.author, name = script.name, description = script.description, channels = {}}
 		local channel_info = {version = script.version, released = script.release, default = true, files = {}}
 		channel_info.requiredModules = clean_depctrl(script.depctrl)
-		channel_info.files[".lua"] = {name = ".lua", url = config.fileUrl, sha1 = script.sha1}
+		table.insert(channel_info.files, {name = ".lua", url = config.fileUrl, sha1 = script.sha1})
 		macro.channels[config.channel] = channel_info
 		feed.macros[script.namespace] = macro
 	end
