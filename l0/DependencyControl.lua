@@ -1,12 +1,8 @@
-local inspect = require "inspect"
 
 local noop = function() end
 
 local function get_version_record(i)
-	local f = io.open("version", "w")
-	f:write(inspect(i))
-	f:flush()
-	f:close()
+	__feedmaker_version = i
 	return {
 		checkVersion = noop,
 		getConfigFileName = noop,
