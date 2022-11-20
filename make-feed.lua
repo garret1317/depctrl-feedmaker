@@ -10,7 +10,7 @@ local inspect = require "inspect"
 
 local args = {macro_dir = "/home/g/subs/automation-scripts/macros", config = "conf.lua", output = "DependencyControl.json"}
 
-local conf = loadfile(args.config)()
+local config = loadfile(args.config)()
 
 local function valid_namespace(name)
 --[[ #### Rules for a valid namespace: ####

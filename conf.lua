@@ -14,7 +14,7 @@ local conf = {
 	fileBaseUrl = "https://raw.githubusercontent.com/garret1317/aegisub-scripts/@{channel}/@{namespace}",
 	scriptUrl = "@{baseUrl}",
 	fileUrl = "@{fileBaseUrl}@{fileName}",
-	includeCondition = ignore
+	ignoreCondition = ignore
 }
 
 return conf
