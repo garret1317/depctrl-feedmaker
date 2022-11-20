@@ -70,8 +70,11 @@ local function get_files(path)
 end
 
 local function get_metadata(file)
-	local meta = {name = nil, description = nil, version = nil, author = nil, namespace = nil, depctrl = nil, sha1 = nil, release = nil}
+	local meta = {filename = nil, name = nil, description = nil, version = nil, author = nil, namespace = nil, depctrl = nil, sha1 = nil, release = nil}
 	-- having all those nils in the table doesn't really do anything in terms of functionality, but it lets me see what i need to put in it
+
+	meta.filename = file
+
 	loadfile(file)()
 	-- script_name etc are now in our global scope
 	if config.ignoreCondition then return nil end
