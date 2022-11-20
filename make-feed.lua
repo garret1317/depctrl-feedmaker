@@ -55,6 +55,17 @@ local function get_iso8601_date(time)
 	return os.date("%Y-%m-%d", time)
 end
 
+local function output_writer(file)
+	local is_file, f = pcall(io.open, file, "w")
+	if is_file then return f end
+	return io.stdout
+end
+
+local function err(msg)
+	if type(msg) == "table" then msg = inspect(msg) end
+	io.stderr:write(msg.."\n")
+end
+
 local function get_files(path)
 	local files = {}
 	for file in lfs.dir(path) do
@@ -62,8 +73,8 @@ local function get_files(path)
 		local absolute = clean_path(path, file)
 		if file == "." or file == ".." then -- silently skip dir and 1-level-up dir
 		elseif pcall(lfs.dir, absolute) then file = join_tables(files, get_files(absolute)) -- search recursively
-		elseif extension ~= "lua" then io.stderr:write(absolute .. ": not a lua file, skipping\n")
-		elseif not valid_namespace(name) then io.stderr:write(absolute .. ": invalid namespace, skipping\n")
+		elseif extension ~= "lua" then err(absolute .. ": not a lua file, skipping")
+		elseif not valid_namespace(name) then err(absolute .. ": invalid namespace, skipping")
 		else table.insert(files, absolute) end
 	end
 	return files
