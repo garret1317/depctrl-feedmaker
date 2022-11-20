@@ -37,9 +37,20 @@ local function clean_path(path, file)
 	return path .. "/" .. file
 end
 
-local function join_tables(dst, src)
+local function join_itables(dst, src)
+	if dst == nil then return src end
+	if src == nil then return dst end
 	for i, v in ipairs(src) do
 		table.insert(dst, v)
+	end
+	return dst
+end
+
+local function join_ktables(dst, src)
+	if dst == nil then return src end
+	if src == nil then return dst end
+	for k, v in pairs(src) do
+		dst[k] = v
 	end
 	return dst
 end
@@ -72,7 +83,7 @@ local function get_files(path)
 		local name, extension = file:match("^(.*)%.(.*)$") -- anything.anything
 		local absolute = clean_path(path, file)
 		if file == "." or file == ".." then -- silently skip dir and 1-level-up dir
-		elseif pcall(lfs.dir, absolute) then file = join_tables(files, get_files(absolute)) -- search recursively
+		elseif pcall(lfs.dir, absolute) then file = join_itables(files, get_files(absolute)) -- search recursively
 		elseif extension ~= "lua" then err(absolute .. ": not a lua file, skipping")
 		elseif not valid_namespace(name) then err(absolute .. ": invalid namespace, skipping")
 		else table.insert(files, absolute) end
