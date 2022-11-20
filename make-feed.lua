@@ -90,7 +90,10 @@ local function get_metadata(file)
 
 	loadfile(file)()
 	-- script_name etc are now in our global scope
-	if config.ignoreCondition() then return nil end
+	if config.ignoreCondition() then
+		err(file .. ": ignored by config, skipping")
+		return nil
+	end
 	meta.name = script_name
 	meta.description = script_description
 	meta.version = script_version
