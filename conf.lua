@@ -1,7 +1,7 @@
 -- untested, may or may not work
 
 local function ignore()
-	return feedmaker_feed ~= "main"
+	return script_namespace == "garret.restyler"
 end
 
 local conf = {
@@ -14,7 +14,8 @@ local conf = {
 	fileBaseUrl = "https://raw.githubusercontent.com/garret1317/aegisub-scripts/@{channel}/@{namespace}",
 	scriptUrl = "@{baseUrl}",
 	fileUrl = "@{fileBaseUrl}@{fileName}",
-	ignoreCondition = ignore
+	ignoreCondition = ignore,
+	channel = "release"
 }
 
 return conf
