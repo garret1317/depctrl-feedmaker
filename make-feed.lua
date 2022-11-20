@@ -44,6 +44,17 @@ local function join_tables(dst, src)
 	return dst
 end
 
+local function readfile(filename)
+	local f = io.open(filename)
+	local txt = f:read("*all")
+	f:close()
+	return txt
+end
+
+local function get_iso8601_date(time)
+	return os.date("%Y-%m-%d", time)
+end
+
 local function get_files(path)
 	local files = {}
 	for file in lfs.dir(path) do
@@ -58,9 +69,31 @@ local function get_files(path)
 	return files
 end
 
+local function get_metadata(file)
+	local meta = {name = nil, description = nil, version = nil, author = nil, namespace = nil, depctrl = nil, sha1 = nil, release = nil}
+	-- having all those nils in the table doesn't really do anything in terms of functionality, but it lets me see what i need to put in it
+	loadfile(file)()
+	-- script_name etc are now in our global scope
+	if config.ignoreCondition then return nil end
+	meta.name = script_name
+	meta.description = script_description
+	meta.version = script_version
+	meta.author = script_author
+	meta.namespace = script_namespace
+	meta.depctrl = __feedmaker_version
+	meta.sha1 = sha1.sha1(readfile(file))
+	meta.release = get_iso8601_date(lfs.attributes(file, "modification"))
+	return meta
+end
+
 local function main()
 	local files = get_files(args.macro_dir)
 	print(inspect(files))
+	local meta = {}
+	for _, file in ipairs(files) do
+		table.insert(meta, get_metadata(file))
+	end
+	print(inspect(meta))
 end
 
 main()
