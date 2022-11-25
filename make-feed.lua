@@ -8,7 +8,7 @@ local inspect = require "inspect"
 --local parser = argparse()
 --local args = parser:parse()
 
-local args = {macro_dir = "/home/g/subs/automation-scripts/macros", config = "conf.lua", output = "DependencyControl.json"}
+local args = {macros =  "/home/g/subs/automation-scripts/macros", modules = "/home/g/subs/automation-scripts/modules", config = "/home/g/subs/depctrl-feedmaker/conf.lua", output = "DependencyControl.json"}
 
 local config = loadfile(args.config)()
 
@@ -77,7 +77,7 @@ local function err(msg)
 	io.stderr:write(msg.."\n")
 end
 
-local function get_files(path)
+local function get_files(path, are_macros)
 	local files = {}
 	for file in lfs.dir(path) do
 		local name, extension = file:match("^(.*)%.(.*)$") -- anything.anything
@@ -85,23 +85,29 @@ local function get_files(path)
 		if file == "." or file == ".." then -- silently skip dir and 1-level-up dir
 		elseif pcall(lfs.dir, absolute) then file = join_itables(files, get_files(absolute)) -- search recursively
 		elseif extension ~= "lua" then err(absolute .. ": not a lua file, skipping")
-		elseif not valid_namespace(name) then err(absolute .. ": invalid namespace, skipping")
+		elseif ((not valid_namespace(name)) and are_macros) then err(absolute .. ": invalid namespace, skipping")
 		else table.insert(files, absolute) end
 	end
 	return files
 end
 
-local function get_metadata(file)
-	local meta = {filename = nil, name = nil, description = nil, version = nil, author = nil, namespace = nil, depctrl = nil, sha1 = nil, release = nil}
+local function get_file_metadata(file)
+	local sha1 = sha1.sha1(readfile(file))
+	local lastmodified = get_iso8601_date(lfs.attributes(file, "modification"))
+	return sha1, lastmodified
+end
+
+local function get_macro_metadata(file)
+	local meta = {filename = file, name = nil, description = nil, version = nil, author = nil, namespace = nil, depctrl = nil, sha1 = nil, release = nil}
 	-- having all those nils in the table doesn't really do anything in terms of functionality, but it lets me see what i need to put in it
 
-	meta.filename = file
-	meta.sha1 = sha1.sha1(readfile(file))
-	meta.release = get_iso8601_date(lfs.attributes(file, "modification"))
+	meta.sha1, meta.release = get_file_metadata(file)
+
+	function include() end -- so it doesnt die with karaskel imports and such
 
 	loadfile(file)()
 	-- script_name etc are now in our global scope
-	if config.ignoreCondition() then
+	if config.macroIgnoreCondition() then
 		err(file .. ": ignored by config, skipping")
 		return nil
 	end
@@ -111,6 +117,26 @@ local function get_metadata(file)
 	meta.author = script_author
 	meta.namespace = script_namespace
 	meta.depctrl = __feedmaker_version
+	return meta
+end
+
+local function get_module_metadata(file)
+	local meta = {filename = nil, name = nil, description = nil, version = nil, author = nil, namespace = nil, depctrl = nil, sha1 = nil, release = nil}
+
+	meta.filename = file
+	meta.sha1, meta.release = get_file_metadata(file)
+	loadfile(file)()
+	-- script_name etc are now in our global scope
+	if config.moduleIgnoreCondition() then
+		err(file .. ": ignored by config, skipping")
+		return nil
+	end
+	local depctrl = __feedmaker_version
+	meta.name = depctrl.name
+	meta.version = depctrl.version
+	meta.author = depctrl.author
+	meta.namespace = depctrl.moduleName
+	meta.depctrl = depctrl[1]
 	return meta
 end
 
@@ -129,7 +155,17 @@ local function clean_depctrl(depctrl)
 	return required, feeds
 end
 
-local function make_feed(macros)
+local function get_feed_entry(script)
+	local macro = {url = config.scriptUrl, author = script.author, name = script.name, description = script.description, channels = {}}
+	local channel_info = {version = script.version, released = script.release, default = true, files = {}}
+	local requiredModules, feeds = clean_depctrl(script.depctrl)
+
+	channel_info.requiredModules = requiredModules
+	table.insert(channel_info.files, {name = ".lua", url = config.fileUrl, sha1 = script.sha1})
+	macro.channels[config.channel] = channel_info
+	return macro, feeds
+end
+local function make_feed(meta)
 	local feed = {
 		dependencyControlFeedFormatVersion = "0.3.0",
 		name = config.name,
@@ -139,27 +175,36 @@ local function make_feed(macros)
 		url = config.url,
 		maintainer = config.maintainer,
 		fileBaseUrl = config.fileBaseUrl,
-		macros = {}
+		macros = {},
+		modules = {}
 	}
-	for _, script in ipairs(macros) do
-		local macro = {url = config.scriptUrl, author = script.author, name = script.name, description = script.description, channels = {}}
-		local channel_info = {version = script.version, released = script.release, default = true, files = {}}
-		local requiredModules, feeds = clean_depctrl(script.depctrl)
+	for _, script in ipairs(meta.macros) do
+		local macro, feeds = get_feed_entry(script)
 		feed.knownFeeds = join_ktables(feed.knownFeeds, feeds)
-
-		channel_info.requiredModules = requiredModules
-		table.insert(channel_info.files, {name = ".lua", url = config.fileUrl, sha1 = script.sha1})
-		macro.channels[config.channel] = channel_info
 		feed.macros[script.namespace] = macro
+	end
+	for _, script in ipairs(meta.modules) do
+		local mod, feeds = get_feed_entry(script)
+		feed.knownFeeds = join_ktables(feed.knownFeeds, feeds)
+		feed.modules[script.namespace] = mod
 	end
 	return json.encode(feed)
 end
 
 local function main()
-	local files = get_files(args.macro_dir)
-	local meta = {}
-	for _, file in ipairs(files) do
-		table.insert(meta, get_metadata(file))
+	local macros, modules
+	local meta = {macros = {}, modules = {}}
+	if args.macros then
+		macro_files = get_files(args.macros, true)
+		for _, file in ipairs(macro_files) do
+			table.insert(meta.macros, get_macro_metadata(file))
+		end
+	end
+	if args.modules then
+		module_files = get_files(args.modules)
+		for _, file in ipairs(module_files) do
+			table.insert(meta.modules, get_module_metadata(file))
+		end
 	end
 	local feed = make_feed(meta)
 
