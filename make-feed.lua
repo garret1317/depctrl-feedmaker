@@ -12,6 +12,13 @@ local args = {macros =  "/home/g/subs/automation-scripts/macros", modules = "/ho
 
 local config = loadfile(args.config)()
 
+local function script_path()
+   local str = debug.getinfo(2, "S").source:sub(2)
+   return str:match("(.*/)")
+end
+
+package.path = script_path() .. "?.lua;" .. package.path -- add the script dir to the lua path so scripts can access the fake depctrl
+
 local function valid_namespace(name)
 --[[ #### Rules for a valid namespace: ####
 
