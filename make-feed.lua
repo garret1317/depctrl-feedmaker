@@ -107,7 +107,7 @@ local function get_macro_metadata(file)
 
 	loadfile(file)()
 	-- script_name etc are now in our global scope
-	if config.macroIgnoreCondition() then
+	if config.macros.ignoreCondition() then
 		err(file .. ": ignored by config, skipping")
 		return nil
 	end
@@ -127,7 +127,7 @@ local function get_module_metadata(file)
 	meta.sha1, meta.release = get_file_metadata(file)
 	loadfile(file)()
 	-- script_name etc are now in our global scope
-	if config.moduleIgnoreCondition() then
+	if config.modules.ignoreCondition() then
 		err(file .. ": ignored by config, skipping")
 		return nil
 	end
@@ -188,6 +188,11 @@ local function make_feed(meta)
 		feed.knownFeeds = join_ktables(feed.knownFeeds, feeds)
 		feed.modules[script.namespace] = mod
 	end
+
+	config.macros.ignoreCondition = nil config.modules.ignoreCondition = nil
+	-- remove the functions so they don't cause problems with the json conversion
+	feed.macros = join_ktables(feed.macros, config.macros)
+	feed.modules = join_ktables(feed.modules, config.modules)
 	return json.encode(feed)
 end
 
