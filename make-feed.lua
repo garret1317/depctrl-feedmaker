@@ -3,12 +3,14 @@ local json = require "json"
 local sha1 = require "sha1"
 local lfs  = require "lfs"
 local inspect = require "inspect"
---local argparse = require "argparse"
+local argparse = require "argparse"
 
---local parser = argparse()
---local args = parser:parse()
-
-local args = {macros =  "/home/g/subs/automation-scripts/macros", modules = "/home/g/subs/automation-scripts/modules", config = "/home/g/subs/depctrl-feedmaker/conf.lua", output = "DependencyControl.json"}
+local parser = argparse() {description = "experimental DependencyControl feed generator"}
+parser:option("--macros", "Macro Directory")
+parser:option("--modules", "Module Directory")
+parser:option("-o --output", "Output File", "DependencyControl.json")
+parser:option("-c --config", "Feed Configuration file")
+local args = parser:parse()
 
 local config = loadfile(args.config)()
 
