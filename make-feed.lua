@@ -184,24 +184,29 @@ local function make_feed(meta)
 		url = config.url,
 		maintainer = config.maintainer,
 		fileBaseUrl = config.fileBaseUrl,
-		macros = {},
-		modules = {}
+--		macros = {},
+--		modules = {}
 	}
-	for _, script in ipairs(meta.macros) do
-		local macro, feeds = get_feed_entry(script)
-		feed.knownFeeds = join_ktables(feed.knownFeeds, feeds)
-		feed.macros[script.namespace] = macro
-	end
-	for _, script in ipairs(meta.modules) do
-		local mod, feeds = get_feed_entry(script)
-		feed.knownFeeds = join_ktables(feed.knownFeeds, feeds)
-		feed.modules[script.namespace] = mod
+	if next(meta.macros) then
+		config.macros.ignoreCondition = nil
+		feed.macros = join_ktables(feed.macros, config.macros) 	-- remove the ignore functions so they don't cause problems with the json conversion
+		for _, script in ipairs(meta.macros) do
+			local macro, feeds = get_feed_entry(script)
+			feed.knownFeeds = join_ktables(feed.knownFeeds, feeds)
+			feed.macros[script.namespace] = macro
+		end
 	end
 
-	config.macros.ignoreCondition = nil config.modules.ignoreCondition = nil
-	-- remove the functions so they don't cause problems with the json conversion
-	feed.macros = join_ktables(feed.macros, config.macros)
-	feed.modules = join_ktables(feed.modules, config.modules)
+	if next(meta.modules) then
+		config.modules.ignoreCondition = nil
+		feed.modules = join_ktables(feed.modules, config.modules)
+		for _, script in ipairs(meta.modules) do
+			local mod, feeds = get_feed_entry(script)
+			feed.knownFeeds = join_ktables(feed.knownFeeds, feeds)
+			feed.modules[script.namespace] = mod
+		end
+	end
+
 	return json.encode(feed)
 end
 
