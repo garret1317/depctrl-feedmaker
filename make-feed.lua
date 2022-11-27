@@ -112,6 +112,17 @@ local function get_file_metadata(file)
 	return sha1, lastmodified
 end
 
+local function run_file(file, extension)
+	local runner
+	if extension == "moon" then
+		runner = moonscript.loadfile(file)
+	else
+		runner = loadfile(file)
+	end
+	local worked, out = pcall(runner)
+	if not worked then err("error when loading "..file..": ".. out) end
+end
+
 local function get_macro_metadata(file)
 	local meta = {file = file, name = nil, description = nil, version = nil, author = nil, namespace = nil, depctrl = nil, sha1 = nil, release = nil}
 	-- having all those nils in the table doesn't really do anything in terms of functionality, but it lets me see what i need to put in it
@@ -121,11 +132,8 @@ local function get_macro_metadata(file)
 
 	function include() end -- so it doesnt die with karaskel imports and such
 
-	if meta.extension == "moon" then
-		moonscript.loadfile(file)()
-	else
-		loadfile(file)()
-	end
+	run_file(file, meta.extension)
+
 	-- script_name etc are now in our global scope
 	if config.macros.ignoreCondition() then
 		err(file .. ": ignored by config, skipping")
@@ -146,12 +154,8 @@ local function get_module_metadata(file)
 	meta.sha1, meta.release = get_file_metadata(file)
 	meta.basename, meta.extension = split_filename(file)
 
-	if meta.extension == "moon" then
-		moonscript.loadfile(file)()
-	else
-		loadfile(file)()
-	end
-	-- script_name etc are now in our global scope
+	run_file(file, meta.extension)
+
 	if config.modules.ignoreCondition() then
 		err(file .. ": ignored by config, skipping")
 		return nil
