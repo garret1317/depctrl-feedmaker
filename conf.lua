@@ -1,7 +1,8 @@
--- untested, may or may not work
-
-local function ignore()
+local function macro_ignore()
 	return script_namespace == "garret.restyler"
+end
+
+local function module_ignore()
 end
 
 local conf = {
@@ -10,12 +11,18 @@ local conf = {
 	maintainer = "garret",
 	knownFeeds = {},
 	url = "https://github.com/garret1317/aegisub-scripts/",
-	baseUrl = "https://github.com/garret1317/aegisub-scripts/",
-	fileBaseUrl = "https://raw.githubusercontent.com/garret1317/aegisub-scripts/@{channel}/@{namespace}",
-	scriptUrl = "@{baseUrl}",
+	baseUrl = "https://raw.githubusercontent.com/garret1317/aegisub-scripts/master",
+	scriptUrl = "@{baseUrl}#@{namespace}",
+	macros = {
+		fileBaseUrl = "@{baseUrl}/macros/@{namespace}",
+		ignoreCondition = macro_ignore,
+	},
+	modules = {
+		fileBaseUrl = "@{baseUrl}/modules/@{namespacePath}",
+		ignoreCondition = module_ignore,
+	},
 	fileUrl = "@{fileBaseUrl}@{fileName}",
-	ignoreCondition = ignore,
-	channel = "release"
+	channel = "master"
 }
 
 return conf
