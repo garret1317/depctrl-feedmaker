@@ -4,6 +4,7 @@ local sha1 = require "sha1"
 local lfs  = require "lfs"
 local inspect = require "inspect"
 local argparse = require "argparse"
+local moonscript = require "moonscript.base"
 
 local parser = argparse() {description = "experimental DependencyControl feed generator"}
 parser:option("--macros", "Macro Directory")
@@ -86,14 +87,19 @@ local function err(msg)
 	io.stderr:write(msg.."\n")
 end
 
+local function split_filename(file)
+	local name, extension = file:match("^(.*)%.(.*)$") -- anything.anything
+	return name, extension
+end
+
 local function get_files(path, are_macros)
 	local files = {}
 	for file in lfs.dir(path) do
-		local name, extension = file:match("^(.*)%.(.*)$") -- anything.anything
+		local name, extension = split_filename(file)
 		local absolute = clean_path(path, file)
 		if file == "." or file == ".." then -- silently skip dir and 1-level-up dir
 		elseif pcall(lfs.dir, absolute) then file = join_itables(files, get_files(absolute)) -- search recursively
-		elseif extension ~= "lua" then err(absolute .. ": not a lua file, skipping")
+		elseif extension ~= "lua" and extension ~= "moon" then err(absolute .. ": not a lua or moonscript file, skipping")
 		elseif ((not valid_namespace(name)) and are_macros) then err(absolute .. ": invalid namespace, skipping")
 		else table.insert(files, absolute) end
 	end
@@ -107,14 +113,19 @@ local function get_file_metadata(file)
 end
 
 local function get_macro_metadata(file)
-	local meta = {filename = file, name = nil, description = nil, version = nil, author = nil, namespace = nil, depctrl = nil, sha1 = nil, release = nil}
+	local meta = {file = file, name = nil, description = nil, version = nil, author = nil, namespace = nil, depctrl = nil, sha1 = nil, release = nil}
 	-- having all those nils in the table doesn't really do anything in terms of functionality, but it lets me see what i need to put in it
 
 	meta.sha1, meta.release = get_file_metadata(file)
+	meta.basename, meta.extension = split_filename(file)
 
 	function include() end -- so it doesnt die with karaskel imports and such
 
-	loadfile(file)()
+	if meta.extension == "moon" then
+		moonscript.loadfile(file)()
+	else
+		loadfile(file)()
+	end
 	-- script_name etc are now in our global scope
 	if config.macros.ignoreCondition() then
 		err(file .. ": ignored by config, skipping")
@@ -130,11 +141,16 @@ local function get_macro_metadata(file)
 end
 
 local function get_module_metadata(file)
-	local meta = {filename = nil, name = nil, description = nil, version = nil, author = nil, namespace = nil, depctrl = nil, sha1 = nil, release = nil}
+	local meta = {file = file, name = nil, description = nil, version = nil, author = nil, namespace = nil, depctrl = nil, sha1 = nil, release = nil}
 
-	meta.filename = file
 	meta.sha1, meta.release = get_file_metadata(file)
-	loadfile(file)()
+	meta.basename, meta.extension = split_filename(file)
+
+	if meta.extension == "moon" then
+		moonscript.loadfile(file)()
+	else
+		loadfile(file)()
+	end
 	-- script_name etc are now in our global scope
 	if config.modules.ignoreCondition() then
 		err(file .. ": ignored by config, skipping")
@@ -170,7 +186,7 @@ local function get_feed_entry(script)
 	local requiredModules, feeds = clean_depctrl(script.depctrl)
 
 	channel_info.requiredModules = requiredModules
-	table.insert(channel_info.files, {name = ".lua", url = config.fileUrl, sha1 = script.sha1})
+	table.insert(channel_info.files, {name = "." .. script.extension, url = config.fileUrl, sha1 = script.sha1})
 	macro.channels[config.channel] = channel_info
 	return macro, feeds
 end
