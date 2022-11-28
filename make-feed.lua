@@ -184,10 +184,13 @@ local function clean_depctrl(depctrl)
 	return required, feeds
 end
 
-local function get_feed_entry(script)
+local function get_feed_entry(script, fileBaseUrl)
 	local macro = {url = config.scriptUrl, author = script.author, name = script.name, description = script.description, channels = {}}
 	local channel_info = {version = script.version, released = script.release, default = true, files = {}}
 	local requiredModules, feeds = clean_depctrl(script.depctrl)
+
+	macro.fileBaseUrl = fileBaseUrl -- let it be known that i'm not happy about this and i want it gone
+	-- but depctrl doesn't comply with its own damn spec
 
 	channel_info.requiredModules = requiredModules
 	table.insert(channel_info.files, {name = "." .. script.extension, url = config.fileUrl, sha1 = script.sha1})
@@ -209,9 +212,9 @@ local function make_feed(meta)
 	}
 	if next(meta.macros) then
 		config.macros.ignoreCondition = nil
-		feed.macros = join_ktables(feed.macros, config.macros) 	-- remove the ignore functions so they don't cause problems with the json conversion
+		feed.macros = feed.macros or {}
 		for _, script in ipairs(meta.macros) do
-			local macro, feeds = get_feed_entry(script)
+			local macro, feeds = get_feed_entry(script, config.macros.fileBaseUrl)
 			feed.knownFeeds = join_ktables(feed.knownFeeds, feeds)
 			feed.macros[script.namespace] = macro
 		end
@@ -219,9 +222,9 @@ local function make_feed(meta)
 
 	if next(meta.modules) then
 		config.modules.ignoreCondition = nil
-		feed.modules = join_ktables(feed.modules, config.modules)
+		feed.modules = feed.modules or {}
 		for _, script in ipairs(meta.modules) do
-			local mod, feeds = get_feed_entry(script)
+			local mod, feeds = get_feed_entry(script, config.modules.fileBaseUrl)
 			feed.knownFeeds = join_ktables(feed.knownFeeds, feeds)
 			feed.modules[script.namespace] = mod
 		end
