@@ -15,13 +15,6 @@ local args = parser:parse()
 
 local config = loadfile(args.config)()
 
-local function script_path()
-   local str = debug.getinfo(2, "S").source:sub(2)
-   return str:match("(.*/)")
-end
-
-package.path = script_path() .. "?.lua;" .. package.path -- add the script dir to the lua path so scripts can access the fake depctrl
-
 local function valid_namespace(name)
 --[[ #### Rules for a valid namespace: ####
 
@@ -112,16 +105,47 @@ local function get_file_metadata(file)
 	return sha1, lastmodified
 end
 
+local noop = function() end
+
+local function fake_depctrl(i)
+	__feedmaker_version = i
+	return {
+		checkVersion = noop,
+		getConfigFileName = noop,
+		getConfigHandler = noop,
+		getLogger = noop,
+		getVersionNumber = noop,
+		getVersionString = noop,
+		loadConfig = noop,
+		loadModule = noop,
+		moveFile = noop,
+		register = noop,
+		registerMacro = noop,
+		registerMacros = noop,
+		registerTests = noop,
+		requireModules = noop,
+		writeConfig = noop,
+		getUpdaterErrorMsg = noop,
+		getUpdaterLock = noop,
+		releaseUpdaterLock = noop,
+		update = noop,
+	}
+end
+
 local function run_file(file, extension)
 	local runner
 	local old_require = require
 	_G.require = function(obj)
-		local got, lib = pcall(old_require, obj)
-		if got then
-			return lib
+		if obj == "l0.DependencyControl" then
+			return fake_depctrl
 		else
-			err(file .. " tried to require " .. obj .. " but couldn't. skipping and hoping it won't matter.")
-			return {} --Some default value, hopefully it should be fine with it
+			local got, lib = pcall(old_require, obj)
+			if got then
+				return lib
+			else
+				err(file .. " tried to require " .. obj .. " but couldn't. skipping and hoping it won't matter.")
+				return {} --Some default value, hopefully it should be fine with it
+			end
 		end
 	end
 
