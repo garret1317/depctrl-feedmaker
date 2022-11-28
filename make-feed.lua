@@ -114,6 +114,17 @@ end
 
 local function run_file(file, extension)
 	local runner
+	local old_require = require
+	_G.require = function(obj)
+		local got, lib = pcall(old_require, obj)
+		if got then
+			return lib
+		else
+			err(file .. " tried to require " .. obj .. " but couldn't. skipping and hoping it won't matter.")
+			return {} --Some default value, hopefully it should be fine with it
+		end
+	end
+
 	if extension == "moon" then
 		runner = moonscript.loadfile(file)
 	else
@@ -121,6 +132,7 @@ local function run_file(file, extension)
 	end
 	local worked, out = pcall(runner)
 	if not worked then err("error when loading "..file..": ".. out) end
+	_G.require = old_require
 end
 
 local function get_macro_metadata(file)
