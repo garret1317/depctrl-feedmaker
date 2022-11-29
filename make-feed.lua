@@ -21,7 +21,7 @@ local function valid_namespace(name)
  1. contains _at least_ one dot
  2. must **not** start or end with a dot
  3. must **not** contain series of two or more dots
- 4. the character set is restricted to: `A-Z`, `a-z`, `0-9`, `.`, `_`, `-` 
+ 4. the character set is restricted to: `A-Z`, `a-z`, `0-9`, `.`, `_`, `-`
 
 __Examples__:
  * l0.ASSFoundation
@@ -43,7 +43,7 @@ end
 local function join_itables(dst, src)
 	if dst == nil then return src end
 	if src == nil then return dst end
-	for i, v in ipairs(src) do
+	for _, v in ipairs(src) do
 		table.insert(dst, v)
 	end
 	return dst
@@ -100,9 +100,9 @@ local function get_files(path, are_macros)
 end
 
 local function get_file_metadata(file)
-	local sha1 = sha1.sha1(readfile(file))
+	local hash = sha1.sha1(readfile(file))
 	local lastmodified = get_iso8601_date(lfs.attributes(file, "modification"))
-	return sha1, lastmodified
+	return hash, lastmodified
 end
 
 local noop = function() end
@@ -270,16 +270,15 @@ local function make_feed(meta)
 end
 
 local function main()
-	local macros, modules
 	local meta = {macros = {}, modules = {}}
 	if args.macros then
-		macro_files = get_files(args.macros, true)
+		local macro_files = get_files(args.macros, true)
 		for _, file in ipairs(macro_files) do
 			table.insert(meta.macros, get_macro_metadata(file))
 		end
 	end
 	if args.modules then
-		module_files = get_files(args.modules)
+		local module_files = get_files(args.modules)
 		for _, file in ipairs(module_files) do
 			table.insert(meta.modules, get_module_metadata(file))
 		end
