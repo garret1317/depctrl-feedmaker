@@ -1,8 +1,8 @@
-local function macro_ignore()
-	return script_namespace == "garret.restyler" -- exclude a specific script
+local function macro_ignore(macro)
+	return macro.namespace == "garret.restyler" -- exclude a specific script
 end
 
-local function module_ignore()
+local function module_ignore(version)
 end
 
 -- most values mean the same thing as they would be in a DependencyControl feed, so will not be explained.
@@ -25,15 +25,13 @@ local conf = {
 		-- macro-specific fileBaseUrl, so you can store macros and modules differently
 		ignoreCondition = macro_ignore,
 		-- feedmaker ignores a macro if it matches the specified condition - that is, if the supplied function returns true.
-		-- ignoreConditions are given access to feedmaker's global scope, which in turn also contains the global scope
-		-- of the macro it's processing, so checks with stuff like script_namespace just work™
+		-- ignoreConditions are passed a table of details about the script. --TODO: which is defined in 
 	},
 	modules = {
 		-- the same as the macros table, but for modules.
 		fileBaseUrl = "@{fileBaseUrl}/modules/@{namespacePath}",
 		ignoreCondition = module_ignore,
-		-- module details can be accessed from the `depctrl` table,
-		-- which contains the DependencyControl version record the module defines
+		-- module ignoreConditions are passed the DependencyControl version record the module defines.
 	},
 	fileUrl = "@{fileBaseUrl}@{fileName}", -- used as the `url` value in the files section of a macro/module. Where the actual file is.
 	channel = "master" -- the default (and only) channel defined in the files section. It doesn't really matter what you put here.
