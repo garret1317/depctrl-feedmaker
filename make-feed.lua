@@ -190,42 +190,42 @@ end
 local function get_macro_metadata(file)
 	local meta = {file = file, name = nil, description = nil, version = nil, author = nil, namespace = nil, depctrl = nil, sha1 = nil, release = nil}
 	-- having all those nils in the table doesn't really do anything in terms of functionality, but it lets me see what i need to put in it
-
 	meta.sha1, meta.release = get_file_metadata(file)
 	meta.basename, meta.extension = split_filename(file)
 
 	function include() end -- so it doesnt die with karaskel imports and such
 
-	run_file(file, meta.extension)
+	local macro = run_file(file, meta.extension)
+	if macro == nil then return nil end
 
-	-- script_name etc are now in our global scope
-	if config.macros.ignoreCondition() then
+	if config.macros.ignoreCondition(macro) then
 		err(file .. ": ignored by config, skipping")
 		return nil
 	end
-	meta.name = script_name
-	meta.description = script_description
-	meta.version = script_version
-	meta.author = script_author
-	meta.namespace = script_namespace
-	meta.changelog = script_changelog
-	meta.depctrl = __feedmaker_version
+	meta.name = macro.script_name
+	meta.description = macro.script_description
+	meta.version = macro.script_version
+	meta.author = macro.script_author
+	meta.namespace = macro.script_namespace
+	meta.changelog = macro.script_changelog
+	meta.depctrl = macro.__feedmaker_version
 	return meta
 end
 
 local function get_module_metadata(file)
+
 	local meta = {file = file, name = nil, description = nil, version = nil, author = nil, namespace = nil, depctrl = nil, sha1 = nil, release = nil}
 
 	meta.sha1, meta.release = get_file_metadata(file)
 	meta.basename, meta.extension = split_filename(file)
 
-	run_file(file, meta.extension)
-
-	if config.modules.ignoreCondition() then
+	local mod = run_file(file, meta.extension)
+	if mod == nil then return nil end
+	if config.modules.ignoreCondition(mod) then
 		err(file .. ": ignored by config, skipping")
 		return nil
 	end
-	local depctrl = __feedmaker_version
+	local depctrl = mod.__feedmaker_version
 	meta.name = depctrl.name
 	meta.version = depctrl.version
 	meta.author = depctrl.author
