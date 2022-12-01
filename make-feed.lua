@@ -237,7 +237,7 @@ end
 local function clean_depctrl(depctrl)
 	local required = {}
 	local feeds = {}
-	if #depctrl == 0 then return nil end
+	if depctrl == nil or #depctrl == 0 then return nil end
 	for _, mod in ipairs(depctrl) do
 		if type(mod[1]) ~= "string" then mod = mod[1] end
 		local modname = mod[1]
