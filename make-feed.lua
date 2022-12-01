@@ -153,31 +153,38 @@ local function fake_depctrl(i)
 	}
 end
 
-local function run_file(file, extension)
-	local runner
-	local old_require = require
-	_G.require = function(obj)
-		if obj == "l0.DependencyControl" then
-			return fake_depctrl
+local function sandbox_require(obj)
+	if obj == "l0.DependencyControl" then
+		return fake_depctrl
+	else
+		local got, lib = pcall(require, obj)
+		if got then
+			return lib
 		else
-			local got, lib = pcall(old_require, obj)
-			if got then
-				return lib
-			else
-				err(file .. " tried to require " .. obj .. " but couldn't. skipping and hoping it won't matter.")
-				return {} --Some default value, hopefully it should be fine with it
-			end
+			err("tried to require " .. obj .. " but couldn't. skipping and hoping it won't matter.")
+			return {} --Some default value, hopefully it should be fine with it
 		end
 	end
+end
+
+local function run_file(file, extension)
+	local runner
+	local env = deepcopy(_G) -- i dont care
+	env.require = sandbox_require
+	-- TODO: care
 
 	if extension == "moon" then
 		runner = moonscript.loadfile(file)
 	else
 		runner = loadfile(file)
 	end
+	if runner == nil then err(file .. " didn't load!") return nil end
+
+	setfenv(runner, env)
+
 	local worked, out = pcall(runner)
-	if not worked then err("error when loading "..file..": ".. out) end
-	_G.require = old_require
+	if not worked then err("error when executing "..file..": ".. out) return nil end
+	return env
 end
 
 local function get_macro_metadata(file)
