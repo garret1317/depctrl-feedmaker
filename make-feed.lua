@@ -198,10 +198,6 @@ local function get_macro_metadata(file)
 	local macro = run_file(file, meta.extension)
 	if macro == nil then return nil end
 
-	if config.macros.ignoreCondition(macro) then
-		err(file .. ": ignored by config, skipping")
-		return nil
-	end
 	meta.name = macro.script_name
 	meta.description = macro.script_description
 	meta.version = macro.script_version
@@ -209,6 +205,12 @@ local function get_macro_metadata(file)
 	meta.namespace = macro.script_namespace
 	meta.changelog = macro.script_changelog
 	meta.depctrl = macro.__feedmaker_version
+	
+	if config.macros.ignoreCondition(meta) then
+		err(file .. ": ignored by config, skipping")
+		return nil
+	end
+	err(meta)
 	return meta
 end
 
@@ -221,16 +223,19 @@ local function get_module_metadata(file)
 
 	local mod = run_file(file, meta.extension)
 	if mod == nil then return nil end
-	if config.modules.ignoreCondition(mod) then
-		err(file .. ": ignored by config, skipping")
-		return nil
-	end
+
 	local depctrl = mod.__feedmaker_version
 	meta.name = depctrl.name
 	meta.version = depctrl.version
 	meta.author = depctrl.author
 	meta.namespace = depctrl.moduleName
 	meta.depctrl = depctrl[1]
+	
+	if config.modules.ignoreCondition(meta) then
+		err(file .. ": ignored by config, skipping")
+		return nil
+	end
+	
 	return meta
 end
 
@@ -291,6 +296,7 @@ local function make_feed(meta)
 		for _, script in ipairs(meta.modules) do
 			local mod, feeds = get_feed_entry(script, config.modules.fileBaseUrl)
 			feed.knownFeeds = join_ktables(feed.knownFeeds, feeds)
+			err(script)
 			feed.modules[script.namespace] = mod
 		end
 	end

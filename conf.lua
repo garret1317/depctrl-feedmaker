@@ -31,7 +31,7 @@ local conf = {
 		-- the same as the macros table, but for modules.
 		fileBaseUrl = "@{fileBaseUrl}/modules/@{namespacePath}",
 		ignoreCondition = module_ignore,
-		-- module ignoreConditions are passed the DependencyControl version record the module defines.
+		-- module ignoreConditions are passed a similar table of details.
 	},
 	fileUrl = "@{fileBaseUrl}@{fileName}", -- used as the `url` value in the files section of a macro/module. Where the actual file is.
 	channel = "master" -- the default (and only) channel defined in the files section. It doesn't really matter what you put here.
