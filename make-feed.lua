@@ -223,7 +223,7 @@ local function get_module_metadata(file)
 	local mod = run_file(file, meta.extension)
 	if mod == nil then return nil end
 
-	local depctrl = mod.__feedmaker_version
+	local depctrl = __feedmaker_version
 	meta.name = depctrl.name
 	meta.version = depctrl.version
 	meta.author = depctrl.author
