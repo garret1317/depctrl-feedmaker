@@ -148,7 +148,10 @@ local function deepcopy(orig, copies) -- copied and pasted from https://lua-user
 	return copy
 end
 
+-- fake libraries so scripts don't throw a fit about not having stuff
+
 local noop = function() end
+local return_input = function(i) return i end
 
 local function fake_depctrl(i)
 	__feedmaker_version = i
@@ -173,6 +176,43 @@ local function fake_depctrl(i)
 		releaseUpdaterLock = noop,
 		update = noop,
 	}
+end
+
+local function fake_aegisub()
+	local aegisub = {}
+
+	aegisub.register_macro = noop
+	aegisub.register_filter = noop
+
+	aegisub.progress = {}
+	aegisub.progress.set = noop
+	aegisub.progress.task = noop
+	aegisub.progress.title = noop
+	aegisub.progress.is_cancelled = noop
+
+	aegisub.debug = {}
+
+	aegisub.debug.out = noop
+	aegisub.log = noop
+
+	aegisub.dialog = {}
+
+	aegisub.dialog.display = noop
+	aegisub.dialog.open = noop
+	aegisub.dialog.save = noop
+
+	aegisub.cancel = noop
+	aegisub.text_extents = noop
+	aegisub.gettext = return_input
+
+	aegisub.frame_from_ms = noop
+	aegisub.ms_from_frame = noop
+	aegisub.video_size = noop
+	aegisub.keyframes = noop
+	aegisub.decode_path = noop
+	aegisub.project_properties = noop
+
+	return aegisub
 end
 
 local function sandbox_require(obj)
