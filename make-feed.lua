@@ -15,7 +15,7 @@ local args = parser:parse()
 
 local config = loadfile(args.config)()
 
-local function valid_namespace(name)
+local function valid_namespace(str)
 --[[ #### Rules for a valid namespace: ####
 
  1. contains _at least_ one dot
@@ -30,8 +30,30 @@ __Examples__:
  * a-mo.LineCollection
  ]]
 
-	return name:match("^[^.][%a%d._-]*%.[%a%d._-]*[^.]$") ~= nil
-	-- not 100% sure this works. it matches the examples, but idk if it matches invalid ones as well
+-- written by chatgpt lol
+
+	-- Check if the string contains at least one dot
+	if not string.find(str, '%.') then
+		return false
+	end
+
+	-- Check if the string starts or ends with a dot
+	if string.sub(str, 1, 1) == '.' or string.sub(str, -1) == '.' then
+		return false
+	end
+
+	-- Check if the string contains a series of two or more dots
+	if string.find(str, '%.%.') then
+		return false
+	end
+
+	-- Check if the string contains invalid characters
+	if string.find(str, '[^%w%.%-_]') then
+		return false
+	end
+
+	-- If all checks pass, the string is valid
+	return true
 end
 
 local function clean_path(path, file)
