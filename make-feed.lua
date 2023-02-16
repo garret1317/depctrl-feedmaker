@@ -180,6 +180,7 @@ local function get_macro_metadata(file)
 	meta.version = script_version
 	meta.author = script_author
 	meta.namespace = script_namespace
+	meta.changelog = script_changelog
 	meta.depctrl = __feedmaker_version
 	return meta
 end
@@ -221,7 +222,7 @@ local function clean_depctrl(depctrl)
 end
 
 local function get_feed_entry(script, fileBaseUrl)
-	local macro = {url = config.scriptUrl, author = script.author, name = script.name, description = script.description, channels = {}}
+	local macro = {url = config.scriptUrl, author = script.author, name = script.name, description = script.description, changelog = script.changelog, channels = {}}
 	local channel_info = {version = script.version, released = script.release, default = true, files = {}}
 	local requiredModules, feeds = clean_depctrl(script.depctrl)
 
