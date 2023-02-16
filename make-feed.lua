@@ -231,9 +231,48 @@ end
 
 local function run_file(file, extension)
 	local runner
-	local env = deepcopy(_G) -- i dont care
-	env.require = sandbox_require
-	-- TODO: care
+	local env = {
+	_VERSION = _VERSION,
+	assert = assert,
+	collectgarbage = collectgarbage,
+	dofile = dofile,
+	error = error,
+	getfenv = getfenv,
+	getmetatable = getmetatable,
+	ipairs = ipairs,
+	load = load,
+	loadfile = loadfile,
+	loadstring = loadstring,
+	module = module,
+	next = next,
+	pairs = pairs,
+	pcall = pcall,
+	print = print,
+	rawequal = rawequal,
+	rawget = rawget,
+	rawset = rawset,
+	select = select,
+	setfenv = setfenv,
+	setmetatable = setmetatable,
+	tonumber = tonumber,
+	tostring = tostring,
+	type = type,
+	unpack = unpack,
+	xpcall = xpcall,
+	coroutine = coroutine,
+	debug = debug,
+	file = file,
+	io = io,
+	math = math,
+	os = os,
+	package = {},
+	string = string,
+	table = table,
+	
+	require = sandbox_require,
+	aegisub = fake_aegisub(),
+	_feedmaker_version = {}
+	}
 
 	if extension == "moon" then
 		runner = moonscript.loadfile(file)
@@ -267,7 +306,12 @@ local function get_macro_metadata(file)
 	meta.namespace = macro.script_namespace
 	meta.changelog = macro.script_changelog
 	meta.depctrl = macro.__feedmaker_version
-	
+
+	if not meta.namespace then
+		err(file .. ": no script_namespace, skipping")
+		return nil
+	end
+
 	if config.macros.ignoreCondition(meta) then
 		err(file .. ": ignored by config, skipping")
 		return nil
