@@ -210,7 +210,6 @@ local function get_macro_metadata(file)
 		err(file .. ": ignored by config, skipping")
 		return nil
 	end
-	err(meta)
 	return meta
 end
 
@@ -296,7 +295,6 @@ local function make_feed(meta)
 		for _, script in ipairs(meta.modules) do
 			local mod, feeds = get_feed_entry(script, config.modules.fileBaseUrl)
 			feed.knownFeeds = join_ktables(feed.knownFeeds, feeds)
-			err(script)
 			feed.modules[script.namespace] = mod
 		end
 	end
