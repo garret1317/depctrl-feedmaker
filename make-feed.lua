@@ -271,7 +271,6 @@ local function run_file(file, extension)
 	
 	require = sandbox_require,
 	aegisub = fake_aegisub(),
-	_feedmaker_version = {}
 	}
 
 	if extension == "moon" then
@@ -294,6 +293,8 @@ local function get_macro_metadata(file)
 	meta.sha1, meta.release = get_file_metadata(file)
 	meta.basename, meta.extension = split_filename(file)
 
+	__feedmaker_version = nil
+
 	function include() end -- so it doesnt die with karaskel imports and such
 
 	local macro = run_file(file, meta.extension)
@@ -305,7 +306,7 @@ local function get_macro_metadata(file)
 	meta.author = macro.script_author
 	meta.namespace = macro.script_namespace
 	meta.changelog = macro.script_changelog
-	meta.depctrl = macro.__feedmaker_version
+	meta.depctrl = __feedmaker_version
 
 	if not meta.namespace then
 		err(file .. ": no script_namespace, skipping")
