@@ -350,6 +350,7 @@ local function clean_depctrl(depctrl)
 	local feeds = {}
 	if depctrl == nil or #depctrl == 0 then return nil end
 	for _, mod in ipairs(depctrl) do
+		if type(mod) == "string" then mod = {mod} end
 		if type(mod[1]) ~= "string" then mod = mod[1] end
 		local modname = mod[1]
 		mod["moduleName"] = modname
